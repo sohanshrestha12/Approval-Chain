@@ -1,0 +1,81 @@
+﻿@model List<Documents>
+@{
+    var sn = 1;
+}
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Reject Reason</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="RejectAdmin" asp-controller="Home" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="docId" name="docId"></input>
+                    <textarea required class="form-control" rows="6" name="rejectReason" placeholder="reject reason"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<h1>Received documents</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>sn</th>
+            <th>doc name</th>
+            <th>doc description</th>
+            <th>doc initiator</th>
+            <th>doc approved by</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var data in Model)
+        {
+            <tr>
+                <td>@(sn++)</td>
+                <td>@data.Document_Name</td>
+                <td>@data.Document_Comment</td>
+                <td>@data.Employee.Employee_Name</td>
+                <td>
+                    @foreach (var item in data.DocumentRecommender)
+                    {
+                        @item.employee.Employee_Name @("  ") @item.Status
+                        <br></br>
+                    }
+                </td>
+                <td>
+                    @if (data.Status == "approved")
+                    {
+                        <p>Approved</p>
+                    }else if(data.Status == "rejected")
+                    {
+                       <p>Rejected</p> 
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary" asp-action="ApproveAdmin" asp-controller="Home" asp-route-docId="@(data.Document_Id)"> Approve</a>
+                        <a class="btn btn-danger" onclick="handleClick(@data.Document_Id)" data-bs-toggle="modal" data-bs-target="#exampleModal">Reject</a>
+
+                    }
+                </td>
+            </tr>
+
+        }
+    </tbody>
+</table>
+
+
+<script>
+    handleClick = (id) => {
+        docId.value = id;
+    }
+</script>

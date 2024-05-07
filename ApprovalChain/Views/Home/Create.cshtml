@@ -1,0 +1,194 @@
+﻿@model List<Documents>
+@{
+    var sn = 1;
+}
+
+@* Modal *@
+<!-- Button trigger modal -->
+@* <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    Launch demo modal
+</button> *@
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Reject Reason</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="RejectRecommender" asp-controller="Home" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="docId" name="docId"></input>
+                    <textarea required class="form-control" rows="6" name="rejectReason" placeholder="reject reason"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <div class="row">
+        <form method="post" asp-action="Create" asp-controller="Home">
+            <div class="mb-3">
+                <label class="form-label">Document</label>
+                <input type="text" name="Documents.Document_Name" class="form-control" id="exampleFormControlInput1" placeholder="Enter an doc name">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Comment</label>
+                <textarea type="text" rows="5" name="Documents.Document_Comment" class="form-control" id="exampleFormControlInput1" placeholder="Comment"></textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-8">
+                    <h1>Workflow Chain Selection</h1>
+                </div>
+                <div class="col-md-7 d-flex flex-column ">
+                    <div class="w-100 d-flex justify-content-between align-items-center">
+                        <h2>Choose Recommenders</h2>
+                        <span id="addRecommenders"><i class="fa-solid fa-plus" style="cursor:pointer"></i></span>
+                    </div>
+                    <div id="recommenderList" class="d-flex flex-column gap-2"></div>
+                </div>
+                <div class="col-md-5">
+                    <h2>Approver</h2>
+                    @Html.DropDownList("Approval.Approval_Id", ViewBag.Approval as SelectList, "select Approval", new { @class = "form-select" })
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+    </div>
+    <h2 style="margin-top:20px">Added docs status</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>SN</th>
+                <th>Doc Name</th>
+                <th>Doc Desc</th>
+                <th>Doc recommenders</th>
+                <th>Approval status</th>
+                <th>Status</th>
+                <th>Current Doc is with</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count > 0)
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@(sn++)</td>
+                        <td>@(item.Document_Name)</td>
+                        <td>@item.Document_Comment</td>
+                        <td>
+                            @foreach (var recom in item.DocumentRecommender)
+                            {
+                                @recom.employee.Employee_Name
+
+                                @(" ") @recom.Status
+
+                                <br></br>
+                            }
+                        </td>
+                        <td>@(item.DocumentApproval.Status)</td>
+                        <td>
+                            @item.Status<br></br>
+                            @if (item.Reject_Review != null)
+                            {
+
+                                @item.Reject_Review
+                            }
+                        </td>
+                        <td>@(item.currentEmpDoc)</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<h1 class="mt-5">Received Document</h1>
+<table class="mb-5 table">
+    <thead>
+        <tr>
+            <th>Doc name</th>
+            <th>Created by</th>
+            <th>Doc desc</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ViewBag.recvDocs != null)
+        {
+
+            @foreach (var data in ViewBag.recvDocs)
+            {
+                <tr>
+                    <td>@(data.Document_Name)</td>
+                    <td>@(data.Employee.Employee_Name)</td>
+                    <td>@(data.Document_Comment)</td>
+                    <td>@(data.DocumentRecommender[0].Status)</td>
+                    <td>
+                        @foreach (var item in data.DocumentRecommender)
+                        {
+                            @if (item.DocumentId == data.Document_Id)
+                            {
+                                @if (item.Status == "pending")
+                                {
+                                    <a class="btn btn-primary" asp-action="Approve" asp-controller="Home" asp-route-docId="@(data.Document_Id)">Approve</a>
+                                    <a class="btn btn-danger" onclick="handleClick(@data.Document_Id)" data-bs-toggle="modal" data-bs-target="#exampleModal">Reject</a>
+                                    @*  <a class="btn btn-danger"   asp-action="RejectRecommender" asp-controller="Home" asp-route-docId="@(data.Document_Id)">Reject</a> *@
+                                }
+                                else if (item.Status == "rejected")
+                                {
+                                    <p>Rejected</p>
+                                }
+                                else
+                                {
+                                    <p>Accepted</p>
+                                }
+                            }
+                        }
+                        @*   @if (data.DocumentRecommender[0].Status == "pending")
+                {
+                <a class="btn btn-primary" asp-action="Approve" asp-controller="Home" asp-route-docId="@(data.Document_Id)">Approve</a>
+                <button class="btn btn-danger">Reject</button>
+                }
+                else if (data.DocumentRecommender[0].Status == "rejected")
+                {
+                <p>Rejected</p>
+                }
+                else
+                {
+                <p>Accepted</p>
+                } *@
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+<script>
+    $(document).ready(function () {
+        let counter = 0;
+        let recommenderList = document.getElementById("recommenderList");
+        let addRecommenders = document.getElementById("addRecommenders");
+        let docId = document.getElementById("docId");
+        addRecommenders.addEventListener('click', (e) => {
+            let html = `<input type="hidden" name="Employee.index" value="${counter}" />
+    @Html.DropDownList("Employee[${counter}].Employee_Id", ViewBag.Employee as SelectList, "select Employee", new { @class = "form-select" })`;
+            recommenderList.insertAdjacentHTML('beforeend', html);
+            counter++;
+        });
+
+
+        handleClick = (id) => {
+            docId.value = id;
+        }
+    });
+</script>
